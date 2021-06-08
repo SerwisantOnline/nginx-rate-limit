@@ -1,0 +1,11 @@
+threshold: 20
+testing: true
+redis:
+  port: 6379
+  host: "localhost"
+  db: 0
+whitelist:
+  ip:
+    - 10.0.0.1
+  path:
+    - /bypassed/path

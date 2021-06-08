@@ -1,0 +1,16 @@
+{
+  "name": "nginx-rate-limit",
+  "version": "1.0.0",
+  "description": "Rate limit middleware for Nginx",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arkadiusz Kurylowicz",
+  "license": "",
+  "dependencies": {
+    "ioredis": "^4.27.5",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21"
+  }
+}
