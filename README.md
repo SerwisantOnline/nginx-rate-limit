@@ -42,10 +42,10 @@ In booth cases (standalone or Passenger) application will listen for incoming co
 
 Before first launch of application config file `config.yml` must be created.
 
-See `config-example.yaml` for example config. You can copy it as a default configuration:
+See `config-example.yml` for example config. You can copy it as a default configuration:
 
 ```shell
-cp config-example.yaml config.yaml
+cp config-example.yml config.yml
 ```
 
 At least you must configure a Redis credentials. You can provide a
