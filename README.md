@@ -13,7 +13,7 @@ HTTP traffic status.
 
 - Nginx (1.5.4+)
 - Redis (any version, ideally with Sentinel for HA purposes)
-- Nodejs
+- Nodejs with npm
 
 ## Installation
 
@@ -23,7 +23,7 @@ Make sure application will start with your OS and will be respawned when will ex
 If with your Nginx you're using a Passenger, you can configure HTTP server to run it as any other application. Example
 Nginx config `/etc/nginx/sites-enabled/nginx_rate_limit`:
 
-```
+```editorconfig
 server {
     listen 127.0.0.1:3001 default_server;
     server_name _;
@@ -40,10 +40,18 @@ In booth cases (standalone or Passenger) application will listen for incoming co
 
 ### Application
 
-See `config-example.yaml` for example config. At least you must configure a Redis credentials. You can provide a
+Before first launch of application config file `config.yml` must be created.
+
+See `config-example.yaml` for example config. You can copy it as a default configuration:
+
+```shell
+cp config-example.yaml config.yaml
+```
+
+At least you must configure a Redis credentials. You can provide a
 single-server credentials like:
 
-```
+```yaml
 redis:
   port: 6379
   host: "localhost"
@@ -52,7 +60,7 @@ redis:
 
 Also Sentinel setups are supported:
 
-```
+```yaml
 redis:
     name: mymaster
     sentinels:
@@ -75,7 +83,7 @@ application will be authorised with external application.
 
 To protect your application to Nginx config `server` section with host you want to protect you must add:
 
-```
+```editorconfig
 server {
     location /nginx_rate_limit_check {
         internal;
