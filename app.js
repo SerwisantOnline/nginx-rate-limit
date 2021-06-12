@@ -45,7 +45,7 @@ function detectKey(path, ip, cookies) {
     if (_.isNull(key)) {
         key = ip
     }
-    return key.slice(0, 32);
+    return key.slice(0, 64);
 }
 
 function checkLimit(key, onSuccess, onLimit) {
