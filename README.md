@@ -28,14 +28,14 @@ Make sure application will start with your OS and will be respawned when will ex
 If with your Nginx you're using a Passenger, you can configure HTTP server to run it as any other application. Example
 Nginx config `/etc/nginx/sites-enabled/nginx_rate_limit`:
 
-```editorconfig
+```
 server {
-listen 127.0.0.1:3001 default_server ;
-          server_name _ ;
-          root /usr/local/lib/nginx_rate_limit/public ;
-passenger_enabled on ;
-passenger_app_type node ;
-passenger_startup_file app.js ;
+  listen 127.0.0.1:3001 default_server;
+  server_name _;
+  root /usr/local/lib/nginx_rate_limit/public;
+  passenger_enabled on;
+  passenger_app_type node;
+  passenger_startup_file app.js;
 }
 ```
 
@@ -87,26 +87,28 @@ application will be authorised with external application.
 
 To protect your application to Nginx config `server` section with host you want to protect you must add:
 
-```editorconfig
+```
 server {
-location /nginx_rate_limit_check {
-internal ;
-proxy_pass http://localhost:3001 ;
-proxy_pass_request_body off ;
-proxy_set_header Content-Length "" ;
-proxy_set_header X-Original-URI $request_uri ;
-proxy_set_header X-Original-IP $remote_addr;
-                                           proxy_set_header X-Original-Method $request_method ;
-                                           }
+  location /nginx_rate_limit_check {
+    internal ;
+    proxy_pass http://localhost:3001 ;
+    proxy_pass_request_body off ;
+    proxy_set_header Content-Length "" ;
+    proxy_set_header X-Original-URI $request_uri ;
+    proxy_set_header X-Original-IP $remote_addr;
+    proxy_set_header X-Original-Method $request_method ;
+  }
 
-                                           location @error_rate_limit_reached {
-                                           add_header Content-Type text/plain always ;
-                                           add_header Retry-After 20 always ;
-                                           return 429 "Too Many Requests" ;
-                                           }
-
-                                           auth_request /nginx_rate_limit_check ;
-                                           error_page 401 = @error_rate_limit_reached ;...below rest of config
+  location @error_rate_limit_reached {
+    add_header Content-Type text/plain always ;
+    add_header Retry-After 20 always ;
+    return 429 "Too Many Requests" ;
+  }
+  
+  auth_request /nginx_rate_limit_check ;
+  error_page 401 = @error_rate_limit_reached ;
+  
+  ...below rest of config
 }
 ```
 
