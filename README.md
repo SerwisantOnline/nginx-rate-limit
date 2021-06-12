@@ -124,6 +124,12 @@ With above config you're
 
 https://github.com/leandromoreira/nginx-lua-redis-rate-measuring
 
+## Disclaimer
+
+Every part of this application is subject of further, not backward compatible changes. It's strongly recommended to
+forking it before use.
+
 ## Author
 
 Arkadiusz Kuryłowicz 2021
+Apache-2.0 License
