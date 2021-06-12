@@ -9,6 +9,11 @@ Nginx instances do not share a traffic status.
 This application has a locale instance working with each Nginx instance and is using a shared Redis database for sharing
 HTTP traffic status.
 
+By default, application is using client IP address as counter key. That means limits are applied to anonymous user
+identified with his IP. You can pass into configuration cookie names to be used as keys. If your application is using
+sessions and is issuing cookie like `PHPSESSID`,  `_session_id` it can be used to apply limit per user. You can also
+issue any other custom cookie from your application to identify a user.
+
 ## Requirements
 
 - Nginx (1.5.4+)
@@ -25,12 +30,12 @@ Nginx config `/etc/nginx/sites-enabled/nginx_rate_limit`:
 
 ```editorconfig
 server {
-    listen 127.0.0.1:3001 default_server;
-    server_name _;
-    root /usr/local/lib/nginx_rate_limit/public;
-    passenger_enabled on;
-    passenger_app_type node;
-    passenger_startup_file app.js;
+listen 127.0.0.1:3001 default_server ;
+          server_name _ ;
+          root /usr/local/lib/nginx_rate_limit/public ;
+passenger_enabled on ;
+passenger_app_type node ;
+passenger_startup_file app.js ;
 }
 ```
 
@@ -48,8 +53,7 @@ See `config-example.yaml` for example config. You can copy it as a default confi
 cp config-example.yaml config.yaml
 ```
 
-At least you must configure a Redis credentials. You can provide a
-single-server credentials like:
+At least you must configure a Redis credentials. You can provide a single-server credentials like:
 
 ```yaml
 redis:
@@ -62,19 +66,19 @@ Also Sentinel setups are supported:
 
 ```yaml
 redis:
-    name: mymaster
-    sentinels:
-      - host: 10.0.0.1
-        port: 26379
-      - host: 10.0.0.2
-        port: 26379               
-      - host: 10.0.0.3
-        port: 26379
+  name: mymaster
+  sentinels:
+    - host: 10.0.0.1
+      port: 26379
+    - host: 10.0.0.2
+      port: 26379
+    - host: 10.0.0.3
+      port: 26379
 ```
 
 You can also configure rate limit threshold (req/min), and some exclusions like bypassed IPs or request paths.
-Application by default is blocking requests - it's strongly recommended to set option `testing: true` on the
-beginning and monitor Nginx error log (or terminal output) for blocked requests to set proper value of `threshold`.
+Application by default is blocking requests - it's strongly recommended to set option `testing: true` on the beginning
+and monitor Nginx error log (or terminal output) for blocked requests to set proper value of `threshold`.
 
 ### Protecting particular host.
 
@@ -85,26 +89,24 @@ To protect your application to Nginx config `server` section with host you want 
 
 ```editorconfig
 server {
-    location /nginx_rate_limit_check {
-        internal;
-        proxy_pass http://localhost:3001;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header X-Original-IP $remote_addr;
-        proxy_set_header X-Original-Method $request_method;
-    }
-    
-    location @error_rate_limit_reached {
-        add_header Content-Type text/plain always;
-        add_header Retry-After 20 always;
-        return 429 "Too Many Requests";
-    }
-    
-    auth_request /nginx_rate_limit_check;
-    error_page 401 = @error_rate_limit_reached;
-    
-    ...below rest of config
+location /nginx_rate_limit_check {
+internal ;
+proxy_pass http://localhost:3001 ;
+proxy_pass_request_body off ;
+proxy_set_header Content-Length "" ;
+proxy_set_header X-Original-URI $request_uri ;
+proxy_set_header X-Original-IP $remote_addr;
+                                           proxy_set_header X-Original-Method $request_method ;
+                                           }
+
+                                           location @error_rate_limit_reached {
+                                           add_header Content-Type text/plain always ;
+                                           add_header Retry-After 20 always ;
+                                           return 429 "Too Many Requests" ;
+                                           }
+
+                                           auth_request /nginx_rate_limit_check ;
+                                           error_page 401 = @error_rate_limit_reached ;...below rest of config
 }
 ```
 

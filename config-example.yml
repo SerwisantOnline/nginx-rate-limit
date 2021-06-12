@@ -1,12 +1,22 @@
-threshold: 20
+# once you've copied this file as your custom config please remove every option you don't use
+
+threshold: 30
 testing: true
+
+cookie_names:
+  - _session_id
+  - PHPSESSID
+
 port: 3001
 redis:
   port: 6379
   host: "localhost"
   db: 0
-whitelist:
+
+bypass:
   ip:
-    - 10.0.0.1
+    - 127.0.0.1
   path:
     - /bypassed/path
+  cookie:
+    - _secret_cookie_name

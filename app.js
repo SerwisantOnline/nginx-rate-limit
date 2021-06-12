@@ -2,27 +2,53 @@ const YAML = require('js-yaml');
 const Fs = require('fs');
 const Redis = require("ioredis");
 const Http = require('http');
+const Cookie = require('cookie');
 const _ = require('lodash');
 
 const config = YAML.load(Fs.readFileSync(__dirname + '/config.yml', 'utf8'));
 const redis = new Redis(_.get(config, 'redis'));
 
-function bypass(path, method, ip) {
-    if (_.indexOf(_.get(config, 'whitelist.ip', []), ip) !== -1) {
+function byPass(path, ip, cookies) {
+    let bypass_ips = _.get(config, 'bypass.ip', []);
+    if (_.indexOf(bypass_ips, ip) !== -1) {
         return true;
     }
+
     let
-        path_found = false,
-        path_in_request = _.replace(path, '//', '/');
-    _.forEach(_.get(config, 'whitelist.path', []), function (path_to_bypass) {
-        if (_.startsWith(path_in_request, path_to_bypass)) {
-            path_found = true;
-        }
-    })
-    return path_found;
+        bypass_paths = _.get(config, 'bypass.path', []),
+        path_fo_find = _.replace(path, '//', '/');
+    if (_.size(_.filter(bypass_paths, function (p) {
+        return p === path_fo_find
+    })) > 0) {
+        return true;
+    }
+
+    let bypass_cookies_names = _.get(config, 'bypass.cookie', []);
+    if (_.size(_.filter(bypass_cookies_names, function (cn) {
+        return _.has(cookies, cn)
+    })) > 0) {
+        return true;
+    }
+
+    return false;
 }
 
-function checkLimit(ip, onSuccess, onLimit) {
+function detectKey(path, ip, cookies) {
+    let
+        key = null,
+        cookie_names = _.get(config, 'cookie_names', []);
+    _.forEach(cookie_names, function (cookie_name) {
+        if (_.isNull(key) && _.has(cookies, cookie_name)) {
+            key = cookie_name + '=' + cookies[cookie_name]
+        }
+    });
+    if (_.isNull(key)) {
+        key = ip
+    }
+    return key.slice(0, 32);
+}
+
+function checkLimit(key, onSuccess, onLimit) {
     let
         current_time = Math.floor(new Date().getTime() / 1000),
         current_second = (current_time % 60),
@@ -30,7 +56,7 @@ function checkLimit(ip, onSuccess, onLimit) {
         past_minute = ((current_minute + 59) % 60);
 
     let
-        key_prefix = "nginx_rate_limit(" + ip + ")",
+        key_prefix = "nginx_rate_limit(" + key + ")",
         current_key = key_prefix + current_minute,
         past_key = key_prefix + past_minute;
 
@@ -64,24 +90,24 @@ function finish(res, code, message) {
 
 const server = Http.createServer(function (req, res) {
     const
-        requestPath = _.get(req.headers, 'x-original-uri', ''),
-        requestMethod = _.upperCase(_.get(req.headers, 'x-original-method', '')),
-        requestIP = _.get(req.headers, 'x-original-ip', '');
-
-    if (bypass(requestPath, requestMethod, requestIP)) {
+        request_path = _.get(req.headers, 'x-original-uri', '/'),
+        request_ip = _.get(req.headers, 'x-original-ip', '0.0.0.0'),
+        cookies = Cookie.parse(_.get(req.headers, 'cookie', ''));
+    if (byPass(request_path, request_ip, cookies)) {
         finish(res, 200, 'BYPASS');
         return;
     }
-    checkLimit(requestIP,
+    let limit_key = detectKey(request_path, request_ip, cookies);
+    checkLimit(limit_key,
         function (current_rate) {
-            finish(res, 200, 'PASS: ' + current_rate);
+            finish(res, 200, 'PASS (' + limit_key + ') ' + current_rate);
         }, function (current_rate) {
-            console.log((new Date()).toISOString() + ": BLOCK: " + requestIP + ' ' + requestPath + " (" + current_rate + ")");
+            console.log((new Date()).toISOString() + ": BLOCK (" + limit_key + ') ' + request_ip + ' ' + request_path + " (" + current_rate + ")");
             let http_code = 401;
             if (_.get(config, 'testing', false) === true) {
                 http_code = 200;
             }
-            finish(res, http_code, 'BLOCK: ' + current_rate);
+            finish(res, http_code, 'BLOCK (' + limit_key + ') ' + current_rate);
         });
 });
 
