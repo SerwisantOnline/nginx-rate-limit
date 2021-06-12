@@ -18,7 +18,7 @@ function byPass(path, ip, cookies) {
         bypass_paths = _.get(config, 'bypass.path', []),
         path_fo_find = _.replace(path, '//', '/');
     if (_.size(_.filter(bypass_paths, function (p) {
-        return p === path_fo_find
+        return _.startsWith(path_fo_find, p);
     })) > 0) {
         return true;
     }
